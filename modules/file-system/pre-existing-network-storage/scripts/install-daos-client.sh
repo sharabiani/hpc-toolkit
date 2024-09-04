@@ -57,6 +57,9 @@ EOF
 			echo "Unsupported RedHat / Rocky Linux system version ${OS_VERSION_MAJOR}. This script only supports version 8 and 9."
 			exit 1
 		fi
+
+		## TODO: Remove disable automatic update script after issue is fixed.
+		/usr/bin/google_disable_automatic_updates
 		dnf makecache
 
 		# 2) Install daos-client
@@ -90,17 +93,17 @@ sed -i "s/#.*transport_config/transport_config/g" $daos_config
 sed -i "s/#.*allow_insecure:.*false/  allow_insecure: true/g" $daos_config
 sed -i "s/.*access_points.*/access_points: $access_points/g" $daos_config
 
-# Move agent log destination from /tmp/ (default) to /var/log/daos_agent/
-mkdir -p /var/log/daos_agent
-chown daos_agent:daos_agent /var/log/daos_agent
-sed -i "s/#.*log_file:.*/log_file: \/var\/log\/daos_agent\/daos_agent.log/g" $daos_config
-
 # Start service
 if { [ "${OS_ID}" = "rocky" ] || [ "${OS_ID}" = "rhel" ]; } && { [ "${OS_VERSION_MAJOR}" = "8" ] || [ "${OS_VERSION_MAJOR}" = "9" ]; }; then
+	# TODO: Update script to change default log destination folder, after daos_agent user is supported in debian and ubuntu.
+	# Move agent log destination from /tmp/ (default) to /var/log/daos_agent/
+	mkdir -p /var/log/daos_agent
+	chown daos_agent:daos_agent /var/log/daos_agent
+	sed -i "s/#.*log_file:.*/log_file: \/var\/log\/daos_agent\/daos_agent.log/g" $daos_config
 	systemctl start daos_agent.service
 elif { [ "${OS_ID}" = "ubuntu" ] && [ "${OS_VERSION}" = "22.04" ]; } || { [ "${OS_ID}" = "debian" ] && [ "${OS_VERSION_MAJOR}" = "12" ]; }; then
 	mkdir -p /var/run/daos_agent
-	daos_agent -o /etc/daos/daos_agent.yml &
+	daos_agent -o /etc/daos/daos_agent.yml >/dev/null 2>&1 &
 else
 	echo "Unsupported operating system ${OS_ID} ${OS_VERSION}. This script only supports Rocky Linux 8, Redhat 8, Redhat 9, Ubuntu 22.04, and Debian 12."
 	exit 1

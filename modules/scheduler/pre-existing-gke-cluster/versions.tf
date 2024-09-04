@@ -20,10 +20,6 @@ terraform {
       source  = "hashicorp/google"
       version = "> 5.0"
     }
-    kubectl = {
-      source  = "gavinbunney/kubectl"
-      version = ">= 1.7.0"
-    }
   }
 
   provider_meta "google" {
